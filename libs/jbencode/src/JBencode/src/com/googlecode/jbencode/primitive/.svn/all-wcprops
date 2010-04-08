@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/14/trunk/JBencode/src/com/googlecode/jbencode/primitive
+END
+IntegerType.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/7/trunk/JBencode/src/com/googlecode/jbencode/primitive/IntegerType.java
+END
+VariantPrimitiveType.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/!svn/ver/7/trunk/JBencode/src/com/googlecode/jbencode/primitive/VariantPrimitiveType.java
+END
+VariantValue.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/8/trunk/JBencode/src/com/googlecode/jbencode/primitive/VariantValue.java
+END
+StringValue.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/9/trunk/JBencode/src/com/googlecode/jbencode/primitive/StringValue.java
+END
+InvariantPrimitiveType.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/6/trunk/JBencode/src/com/googlecode/jbencode/primitive/InvariantPrimitiveType.java
+END
+StringType.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/6/trunk/JBencode/src/com/googlecode/jbencode/primitive/StringType.java
+END
+IntegerValue.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/14/trunk/JBencode/src/com/googlecode/jbencode/primitive/IntegerValue.java
+END
+PrimitiveType.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/4/trunk/JBencode/src/com/googlecode/jbencode/primitive/PrimitiveType.java
+END

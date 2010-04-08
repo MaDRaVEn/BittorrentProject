@@ -2,6 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="libs/jbencode/jbencode.jar"/>
+	<classpathentry kind="lib" path="libs/jbencode/jbencode.jar" sourcepath="libs/jbencode/src"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

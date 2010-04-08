@@ -1,0 +1,54 @@
+8
+
+dir
+19
+http://jbencode.googlecode.com/svn/trunk/JBencode/test
+http://jbencode.googlecode.com/svn
+
+
+
+2008-07-15T03:32:30.749837Z
+19
+djspiewak
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+b29ecca1-ce48-0410-a22c-9f347960e42d
+
+GeneratorTest.java
+file
+
+
+
+
+2010-04-08T16:11:12.000000Z
+a30b5dce4954df0a82e96a585402923c
+2008-07-15T03:32:30.749837Z
+19
+djspiewak
+has-props
+
+ParserTest.java
+file
+
+
+
+
+2010-04-08T16:11:12.000000Z
+c4beb68e4aa7119876c618fca6388060
+2008-07-15T03:32:30.749837Z
+19
+djspiewak
+has-props
+
