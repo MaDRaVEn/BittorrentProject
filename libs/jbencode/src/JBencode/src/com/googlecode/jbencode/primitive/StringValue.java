@@ -28,7 +28,7 @@ public class StringValue implements VariantValue<byte[]> {
 	}
 
 	public byte[] resolve() throws IOException {
-		if (resolved) {
+		if (resolved || is.available() == 0) {
 			throw new IOException("Value already resolved");
 		}
 		resolved = true;
