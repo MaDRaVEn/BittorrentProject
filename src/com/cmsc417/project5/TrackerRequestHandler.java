@@ -100,7 +100,7 @@ public class TrackerRequestHandler {
 			if (hexVal.length() != 2) {
 				urlEncodedHash += ("%0" + hexVal);
 			} else {
-				urlEncodedHash += ("%hexVal");
+				urlEncodedHash += ("%"+hexVal);
 			}
 		}
 
