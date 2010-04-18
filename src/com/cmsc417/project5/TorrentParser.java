@@ -1,5 +1,6 @@
 package com.cmsc417.project5;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import org.ardverk.coding.BencodingInputStream;
+import org.ardverk.coding.BencodingOutputStream;
 
 public class TorrentParser {
 	
@@ -17,6 +19,7 @@ public class TorrentParser {
 	private long fileLength;
 	private long pieceLength;
 	private byte[] hashes;
+	private ByteArrayOutputStream infoMapStream;
 	
 	
 	public TorrentParser(File file) {
@@ -48,6 +51,14 @@ public class TorrentParser {
 				this.fileLength = ((BigInteger)infoMap.get("length")).longValue();
 				this.pieceLength = ((BigInteger)infoMap.get("piece length")).longValue();
 				this.hashes = (byte[])infoMap.get("pieces");
+				
+				infoMapStream = new ByteArrayOutputStream();
+				BencodingOutputStream infoMapWriter = new BencodingOutputStream(infoMapStream);
+				try {
+					infoMapWriter.writeMap(infoMap);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -80,5 +91,9 @@ public class TorrentParser {
 			hashesList.add(hash);
 		}
 		return hashesList;
+	}
+	
+	public byte[] getInfoMap() {
+		return infoMapStream.toByteArray();
 	}
 }
