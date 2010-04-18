@@ -49,36 +49,22 @@ public class TrackerRequestHandler {
 
 		URL request = null;
 		URLConnection connection = null;
+		PlainTextInputStream content = null;
+		Map<String, ?> trackerResponse = null;
 		
 		try {
 			request = new URL(requestURL);
 			connection = request.openConnection();
+			content = (PlainTextInputStream) connection.getContent();
+			BencodingInputStream trackerStream = new BencodingInputStream(
+					content);
+			trackerResponse = trackerStream.readMap();
+			return trackerResponse;
+			
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-
-		if (connection != null) {
-			PlainTextInputStream content = null;
-			
-			try {
-				content = (PlainTextInputStream) connection.getContent();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			
-			if (content != null) {
-				BencodingInputStream trackerStream = new BencodingInputStream(
-						content);
-				Map<String, ?> trackerResponse = null;
-				try {
-					trackerResponse = trackerStream.readMap();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				return trackerResponse;
-			}
 		}
 
 		return null;
