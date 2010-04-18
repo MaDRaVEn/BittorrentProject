@@ -10,8 +10,6 @@ import java.util.Map;
 
 import org.ardverk.coding.BencodingInputStream;
 
-
-
 public class TorrentParser {
 	
 	private String announce;
