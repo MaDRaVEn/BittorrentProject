@@ -12,6 +12,11 @@ import java.util.Map;
 import org.ardverk.coding.BencodingInputStream;
 import org.ardverk.coding.BencodingOutputStream;
 
+/**
+ * @author Chris Kaminski & David Thomas
+ *
+ */
+
 public class TorrentParser {
 	
 	private String announce;
@@ -22,6 +27,10 @@ public class TorrentParser {
 	private ByteArrayOutputStream infoMapStream;
 	
 	
+	/**
+	 * 
+	 * @param file
+	 */
 	public TorrentParser(File file) {
 		FileInputStream fileStream = null;
 		BencodingInputStream stream;
@@ -37,14 +46,14 @@ public class TorrentParser {
 			Map<String, ?> map = null;
 			
 			try {
-				
 				map = stream.readMap();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
 			if(map != null) {
+				
+				//Parse out all the required fields.
 				this.announce = new String((byte[])map.get("announce"));
 				Map<String, ?> infoMap = (Map<String, ?>)map.get("info");
 				this.torrentName = new String((byte[])infoMap.get("name"));
@@ -63,26 +72,48 @@ public class TorrentParser {
 		}
 	}
 	
+	/**
+	 * 
+	 * Return the string representation of the announce URL.
+	 * @return
+	 */
 	public String getAnnounce() {
 		return announce;
 	}
 
+	/**
+	 * Return the torrent file's name.
+	 * @return
+	 */
 	public String getTorrentName() {
 		return torrentName;
 	}
 
+	/**
+	 * Return the length of the file in bytes.
+	 * @return
+	 */
 	public long getFileLength() {
 		return fileLength;
 	}
 
+	/**
+	 * Return the length of a piece.
+	 * @return
+	 */
 	public long getPieceLength() {
 		return pieceLength;
 	}
 
+	/**
+	 * Return the 20-byte hashes for this torrent in an array list.
+	 * @return
+	 */
 	public ArrayList<byte[]> getHashes() {
 		
 		ArrayList<byte[]> hashesList = new ArrayList<byte[]>();
 		
+		//Break the single hash field into 20-byte hash strings.
 		for(int i = 0; i < hashes.length/20; i++) {
 			byte hash[] = new byte[20];
 			for(int j = 0; j < 20; j++) {
@@ -93,6 +124,10 @@ public class TorrentParser {
 		return hashesList;
 	}
 	
+	/**
+	 * Return the byte representation of the info map.
+	 * @return
+	 */
 	public byte[] getInfoMap() {
 		return infoMapStream.toByteArray();
 	}
