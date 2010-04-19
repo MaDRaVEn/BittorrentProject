@@ -6,8 +6,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 import org.ardverk.coding.BencodingInputStream;
@@ -26,19 +24,14 @@ public class TrackerRequestHandler {
 	private int port;
 
 	public TrackerRequestHandler(String baseURL, String peerID,
-									byte[] infoDictionary, int port) {
+									byte[] infoHash, int port) {
 
 		this.baseURL = baseURL;
 		try {
 
-			MessageDigest digest = MessageDigest.getInstance("SHA-1");
-			byte infoHash[] = digest.digest(infoDictionary);
-
 			this.info = urlEncodeHash(infoHash);
 			this.peerID = URLEncoder.encode(peerID, "UTF-8");
-
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
+			
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}

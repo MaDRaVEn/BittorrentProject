@@ -6,6 +6,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -125,10 +127,20 @@ public class TorrentParser {
 	}
 	
 	/**
-	 * Return the byte representation of the info map.
+	 * Return the SHA-1 hash of the info map.
 	 * @return
 	 */
-	public byte[] getInfoMap() {
-		return infoMapStream.toByteArray();
+	public byte[] getInfoHash() {
+		
+		MessageDigest digest;
+		try {
+			digest = MessageDigest.getInstance("SHA-1");
+			byte infoHash[] = digest.digest(infoMapStream.toByteArray());
+			return infoHash;
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
 }

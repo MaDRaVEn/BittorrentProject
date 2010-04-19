@@ -10,7 +10,7 @@ public class PeerConnection implements Runnable {
 		this.socket = socket;
 	}
 	
-	@Override
+	
 	public void run() {
 		// TODO Auto-generated method stub
 
