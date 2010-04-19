@@ -12,7 +12,7 @@ public class Driver {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		TorrentParser parser = new TorrentParser(new File("/Users/shaft/Desktop/torrents/file0.torrent"));
+		TorrentParser parser = new TorrentParser(new File("file0.torrent"));
 		TrackerRequestHandler handler = new TrackerRequestHandler(parser.getAnnounce(),
 																  "-KC0001-910483711192",
 																  parser.getInfoMap(),
