@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 
 
@@ -41,25 +42,39 @@ public class ConnectionPool implements Runnable {
 		for(String[] peerTuple : peers) {
 			
 			Socket socket = null;
+			String ip = null;
 			
 			if(peerTuple.length == 2) {
+				ip = peerTuple[0];
 				try {
-					socket = new Socket(InetAddress.getByName(peerTuple[0]),
+					socket = new Socket(InetAddress.getByName(ip),
 										Integer.parseInt(peerTuple[1]));
 				} catch (Exception e) {
 					e.printStackTrace();
 				} 
 			} else {
+				ip = peerTuple[1];
 				try {
-					socket = new Socket(InetAddress.getByName(peerTuple[1]),
-							Integer.parseInt(peerTuple[1]));
+					socket = new Socket(InetAddress.getByName(ip),
+										Integer.parseInt(peerTuple[1]));
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 			
 			if(socket != null && socket.isConnected()) {
-				
+				if(initiateHandshake(socket) == false) {
+					if(!socket.isClosed()) {
+						try {
+							socket.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					} else {
+						servedPeers.put(ip, threadPool.schedule(new PeerConnection(socket), 
+																	0, TimeUnit.SECONDS));
+					}
+				}
 			}
 		}
 	}
@@ -78,6 +93,22 @@ public class ConnectionPool implements Runnable {
 	private boolean initiateHandshake(Socket socket) {
 		
 		OutputStream out = null;
+		byte[] message = makeHandshakeMessage();
+		
+		try {
+			out = socket.getOutputStream();
+			out.write(message);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		return getHandshakeResponse(socket);
+		
+	}
+	
+	private byte[] makeHandshakeMessage() {
+		
 		byte[] message = new byte[68];
 		String protocol = "BitTorrent protocol";
 		
@@ -97,17 +128,7 @@ public class ConnectionPool implements Runnable {
 			message[i] = idBytes[i-28];
 		}
 		
-		
-		try {
-			out = socket.getOutputStream();
-			out.write(message);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
-		}
-		
-		return getHandshakeResponse(socket);
-		
+		return message;
 	}
 	
 	private boolean getHandshakeResponse(Socket socket) {
@@ -119,6 +140,6 @@ public class ConnectionPool implements Runnable {
 			e.printStackTrace();
 		}
 		
-		
+		return false;
 	}
 }
