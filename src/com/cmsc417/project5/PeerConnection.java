@@ -43,10 +43,7 @@ public class PeerConnection implements Runnable {
 		this.parent = parent;
 	}
 	
-<<<<<<< HEAD
-	
-=======
->>>>>>> 95fda3c517f06f7dab1354c8006196d77d100d01
+
 	public void run() {
 		while(true) {
 			

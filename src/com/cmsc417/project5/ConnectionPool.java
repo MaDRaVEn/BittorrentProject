@@ -58,7 +58,8 @@ public class ConnectionPool implements Runnable {
 		}
 		
 		try {
-			this.socket = new ServerSocket(port);
+			this.socket = new ServerSocket(port,30,InetAddress.getLocalHost());
+			
 			channel = (new FileOutputStream(new File(parser.getTorrentName()))).getChannel();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -101,6 +102,7 @@ public class ConnectionPool implements Runnable {
 				} else {
 					servedPeers.put(ip, threadPool.schedule(new PeerConnection(socket, this), 
 															0, TimeUnit.SECONDS));
+					threadPool.getQueue().peek().run();
 				}		
 			}
 		}
@@ -196,7 +198,7 @@ public class ConnectionPool implements Runnable {
 			byte[] idBytes = peerID.getBytes();
 			message[i] = idBytes[i-48];
 		}
-		
+		System.out.println(new String(message));
 		return message;
 	}
 	
@@ -243,16 +245,18 @@ public class ConnectionPool implements Runnable {
 			if(!response.substring(1, 20).equals("BitTorrent protocol")) {
 				return false;
 			}
-			
-			if(!(new String(infoHash)).equals(response.substring(28, 47))) {
+			String hash = response.substring(28, 48);
+			System.out.println("Response hash is "+hash);
+			System.out.println("Orginal infoHash is "+ new String(infoHash));
+			if(!(new String(infoHash)).equals(response.substring(28, 48))) {
 				return false;
 			}
 			
-			if(expectedPeer != null && (expectedPeer.equals(response.substring(47)))) {
+			if(expectedPeer != null && (expectedPeer.equals(response.substring(48)))) {
 				return false;
 			}
 			
-			if(response.substring(47).equals(this.peerID)) {
+			if(response.substring(48).equals(this.peerID)) {
 				return false;
 			}
 			

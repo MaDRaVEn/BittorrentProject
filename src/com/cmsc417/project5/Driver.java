@@ -25,18 +25,25 @@ public class Driver {
 		
 		
 		ArrayList<String[]> peerList = parsePeers(peers);
-		ConnectionPool pool = new ConnectionPool(6881, infoHash, "-KC0001-910483711192");
-<<<<<<< HEAD
-=======
+		
+		for(String[] list: peerList){
+			for(String peerString: list){
+				System.out.println(peerString);
+			}
+		}
+		
+		
+		ConnectionPool pool = new ConnectionPool(6881,"-KC0001-910483711192",parser);
+
 		
 		pool.addPeers(peerList);
->>>>>>> 95fda3c517f06f7dab1354c8006196d77d100d01
 		pool.addPeers(peerList);
 	}
 	
 	public static ArrayList<String[]> parsePeers(Object peers) {
 		
 		ArrayList<String[]> returned = new ArrayList<String[]>();
+		
 		
 		if(peers instanceof ArrayList<?>) {
 			ArrayList<Map<String, ?>> peerList = (ArrayList<Map<String,?>>)peers;
