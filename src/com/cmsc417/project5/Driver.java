@@ -26,6 +26,11 @@ public class Driver {
 		
 		ArrayList<String[]> peerList = parsePeers(peers);
 		ConnectionPool pool = new ConnectionPool(6881, infoHash, "-KC0001-910483711192");
+<<<<<<< HEAD
+=======
+		
+		pool.addPeers(peerList);
+>>>>>>> 95fda3c517f06f7dab1354c8006196d77d100d01
 		pool.addPeers(peerList);
 	}
 	
