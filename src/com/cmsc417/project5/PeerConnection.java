@@ -15,9 +15,11 @@ public class PeerConnection implements Runnable {
 	
 	private byte[] peerBitfield;
 	private ArrayList<Request> peerRequests;
+	private ArrayList<Piece> myPieces;
 	
+	private int pieceSize;
 	
-	public PeerConnection(Socket socket, int numPieces) {
+	public PeerConnection(Socket socket, int numPieces, int pieceSize) {
 		this.socket = socket;
 		this.amChoking = true;
 		this.amInterested = false;
@@ -30,6 +32,8 @@ public class PeerConnection implements Runnable {
 		}
 		
 		this.peerRequests = new ArrayList<Request>();
+		this.myPieces = new ArrayList<Piece>();
+		this.pieceSize = pieceSize;
 	}
 	
 	public void run() {
@@ -109,14 +113,6 @@ public class PeerConnection implements Runnable {
 	
 	private void handleMessage(byte ID, byte[] payload) {
 		
-		byte[] indexBytes = new byte[4];
-		byte[] offsetBytes = new byte[4];
-		byte[] lengthBytes = new byte[4];
-		
-		int index, offset, length = 0;
-		
-		Request request;
-		
 		switch(ID) {
 		case 0: setPeerChoking(true); break;
 		case 1: setPeerChoking(false); break;
@@ -128,56 +124,70 @@ public class PeerConnection implements Runnable {
 			for(int i = 0; i < peerBitfield.length; i++) {
 				peerBitfield[i] |= (0xFF & payload[i]);
 			}
-			
 			break;
-		case 6:
 			
-			for(int i = 0; i < 4; i++) {
-				indexBytes[i] = payload[i];
-			}
-			for(int i = 4; i < 8; i++) {
-				offsetBytes[i-4] = payload[i];
-			}
-			for(int i = 8; i < 12; i++) {
-				lengthBytes[i-8] = payload[i];
-			}
+		default:
 			
-			index = bytesToInt(indexBytes);
-			offset = bytesToInt(offsetBytes);
-			length = bytesToInt(lengthBytes);
-			
-			request = new Request(index, offset, length);
-			
-			if(peerRequests.contains(request)) {
-				peerRequests.remove(request);
-			}
-			peerRequests.add(request);
-			
-			break;
-		case 7:
-			break;
-		case 8:
-			
-			for(int i = 0; i < 4; i++) {
-				indexBytes[i] = payload[i];
-			}
-			for(int i = 4; i < 8; i++) {
-				offsetBytes[i-4] = payload[i];
-			}
-			for(int i = 8; i < 12; i++) {
-				lengthBytes[i-8] = payload[i];
-			}
-			
-			index = bytesToInt(indexBytes);
-			offset = bytesToInt(offsetBytes);
-			length = bytesToInt(lengthBytes);
-			
-			request = new Request(index, offset, length);
-			if(peerRequests.contains(request)) {
-				peerRequests.remove(request);
-			}
-			
-			break;
+			if(ID == 6 || ID == 7 || ID == 8) {
+				
+				byte[] indexBytes = new byte[4];
+				byte[] offsetBytes = new byte[4];
+				
+				
+				int index, offset = 0;
+				
+				for(int i = 0; i < 4; i++) {
+					indexBytes[i] = payload[i];
+				}
+				
+				for(int i = 4; i < 8; i++) {
+					offsetBytes[i-4] = payload[i];
+				}
+				
+				index = bytesToInt(indexBytes);
+				offset = bytesToInt(offsetBytes);
+				
+				if(ID == 6 || ID == 8) {
+					
+					byte[] lengthBytes = new byte[4];
+					int length = 0;
+					
+					for(int i = 8; i < 12; i++) {
+						lengthBytes[i-8] = payload[i];
+					}
+					
+					length = bytesToInt(lengthBytes);
+					Request request = new Request(index, offset, length);
+					
+					if(peerRequests.contains(request)) {
+						peerRequests.remove(request);
+					}
+					
+					if(ID == 6)
+						peerRequests.add(request);
+					
+				} else if(ID == 7) {
+					
+					byte[] data = new byte[payload.length - 8];
+					for(int i = 8; i < payload.length; i++) {
+						data[i-8] = payload[i];
+					}
+					
+					Piece writtenPiece = new Piece(pieceSize, index);
+					
+					for(Piece piece : myPieces) {
+						if(piece.getIndex() == index) {
+							writtenPiece = piece;
+							break;
+						}
+					}
+					
+					writtenPiece.write(offset, data);
+					if(!myPieces.contains(writtenPiece)) {
+						myPieces.add(writtenPiece);
+					}
+				}
+			}		
 		}
 	}
 	
