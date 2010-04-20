@@ -1,11 +1,18 @@
 package com.cmsc417.project5;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
@@ -17,26 +24,45 @@ import java.util.concurrent.TimeUnit;
 public class ConnectionPool implements Runnable {
 	
 	private ServerSocket socket;
-	private byte[] infoHash;
+	
 	private String peerID;
+	private byte[] infoHash;
+	
+	private volatile ArrayList<byte[]> pieceHashes;
+	private volatile long pieceLength;
+	
 	private ScheduledThreadPoolExecutor threadPool;
 	private ConcurrentHashMap<String, ScheduledFuture<?>> servedPeers;
 	
+	private boolean completedPieces[];
+	
+	private FileChannel channel;
+	
 	public ConnectionPool(int port,
-			   			  byte[] infoHash,
-			   			  String peerID) {
+			   			  String peerID,
+			   			  TorrentParser parser) {
 		
-		try {
-			this.socket = new ServerSocket(port);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		this.infoHash = infoHash;
+		this.infoHash = parser.getInfoHash();
 		this.peerID = peerID;
 		this.threadPool = new ScheduledThreadPoolExecutor(25);
 		this.servedPeers = new ConcurrentHashMap<String, ScheduledFuture<?>>();
 		
+		this.pieceHashes = parser.getHashes();
+		
+		this.pieceLength = parser.getPieceLength();
+		
+		this.completedPieces = new boolean[pieceHashes.size()];
+		
+		for(int i = 0; i < completedPieces.length; i++) {
+			completedPieces[i] = false;
+		}
+		
+		try {
+			this.socket = new ServerSocket(port);
+			channel = (new FileOutputStream(new File(parser.getTorrentName()))).getChannel();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void addPeers(ArrayList<String[]> peers) {
@@ -73,7 +99,7 @@ public class ConnectionPool implements Runnable {
 						}
 					}
 				} else {
-					servedPeers.put(ip, threadPool.schedule(new PeerConnection(socket), 
+					servedPeers.put(ip, threadPool.schedule(new PeerConnection(socket, this), 
 															0, TimeUnit.SECONDS));
 				}		
 			}
@@ -85,6 +111,49 @@ public class ConnectionPool implements Runnable {
 		}
 	}
 	
+	public int getNumPieces() {
+		return this.pieceHashes.size();
+	}
+	
+	public long getPieceLength() {
+		return this.pieceLength;
+	}
+	
+	public synchronized void writePiece(Piece piece) {
+		
+		byte[] data = piece.getData();
+		int index = piece.getIndex();
+		MessageDigest digest;
+		
+		if(completedPieces[index] == true)
+			return;
+		
+		try {
+			digest = MessageDigest.getInstance("SHA-1");
+			
+			byte hash[] = digest.digest(data);
+			byte canonicalHash[] = pieceHashes.get(index);
+			
+			boolean equal = true;
+			
+			for(int i = 0; i < 20; i++) {
+				if(hash[i] != canonicalHash[i]) {
+					equal = false;
+					break;
+				}
+			}
+			if(equal == true) {
+				channel.write(ByteBuffer.allocate(20).put(data), index);
+				completedPieces[index] = true;
+			}
+			
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
 	public void run() {
 		
@@ -172,14 +241,12 @@ public class ConnectionPool implements Runnable {
 		} else {
 			String response = new String(buffer);
 			if(!response.substring(1, 20).equals("BitTorrent protocol")) {
-
 				return false;
 			}
 			
 			if(!(new String(infoHash)).equals(response.substring(28, 47))) {
 				return false;
 			}
-		
 			
 			if(expectedPeer != null && (expectedPeer.equals(response.substring(47)))) {
 				return false;

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class PeerConnection implements Runnable {
 
@@ -14,30 +15,58 @@ public class PeerConnection implements Runnable {
 	private boolean peerInterested;
 	
 	private byte[] peerBitfield;
-	private ArrayList<Request> peerRequests;
+	private LinkedList<Request> peerRequests;
+	private LinkedList<Request> myRequests;
+	
 	private ArrayList<Piece> myPieces;
+	private long pieceLength;
 	
-	private int pieceSize;
+	private ConnectionPool parent;
 	
-	public PeerConnection(Socket socket, int numPieces, int pieceSize) {
+	public PeerConnection(Socket socket, ConnectionPool parent) {
 		this.socket = socket;
 		this.amChoking = true;
 		this.amInterested = false;
 		this.peerChoking = true;
 		this.peerInterested = false;
-		this.peerBitfield = new byte[numPieces/8];
+		this.peerBitfield = new byte[parent.getNumPieces()/8];
 		
 		for(int i = 0; i < peerBitfield.length; i++) {
 			peerBitfield[i] = 0;
 		}
 		
-		this.peerRequests = new ArrayList<Request>();
+		this.peerRequests = new LinkedList<Request>();
+		this.myRequests = new LinkedList<Request>();
+		
 		this.myPieces = new ArrayList<Piece>();
-		this.pieceSize = pieceSize;
+		this.pieceLength = parent.getPieceLength();
+		this.parent = parent;
 	}
 	
 	public void run() {
-		
+		while(true) {
+			
+			readMessage();
+			
+			for(Piece piece : myPieces) {
+				if(piece.completed()) {
+					parent.writePiece(piece);
+					myPieces.remove(piece);
+				}
+			}
+			
+			if(this.peerInterested && !getChoking()) {
+				if(peerRequests.size() > 0) {
+					Request request = peerRequests.poll();
+				}
+			}
+			
+			if(!this.peerChoking && getInterested()) {
+				if(myRequests.size() > 0) {
+					Request request = myRequests.poll();
+				}
+			}
+		}
 	}
 	
 	private void readMessage() {
@@ -114,10 +143,10 @@ public class PeerConnection implements Runnable {
 	private void handleMessage(byte ID, byte[] payload) {
 		
 		switch(ID) {
-		case 0: setPeerChoking(true); break;
-		case 1: setPeerChoking(false); break;
-		case 2: setPeerInterested(true); break;
-		case 3: setPeerInterested(false); break;
+		case 0: this.peerChoking = true; break;
+		case 1: this.peerChoking = false; break;
+		case 2: this.peerInterested = true; break;
+		case 3: this.peerInterested = false; break;
 		case 4: peerHas(bytesToInt(payload)); break;
 		case 5:
 			
@@ -132,7 +161,6 @@ public class PeerConnection implements Runnable {
 				
 				byte[] indexBytes = new byte[4];
 				byte[] offsetBytes = new byte[4];
-				
 				
 				int index, offset = 0;
 				
@@ -164,7 +192,7 @@ public class PeerConnection implements Runnable {
 					}
 					
 					if(ID == 6)
-						peerRequests.add(request);
+						peerRequests.offer(request);
 					
 				} else if(ID == 7) {
 					
@@ -173,7 +201,7 @@ public class PeerConnection implements Runnable {
 						data[i-8] = payload[i];
 					}
 					
-					Piece writtenPiece = new Piece(pieceSize, index);
+					Piece writtenPiece = new Piece((int)pieceLength, index);
 					
 					for(Piece piece : myPieces) {
 						if(piece.getIndex() == index) {
@@ -191,18 +219,26 @@ public class PeerConnection implements Runnable {
 		}
 	}
 	
-	private synchronized void peerHas(int piece) {
+	private void peerHas(int piece) {
 		int byteIndex = piece/8;
 		int bitOffset = piece - (8*byteIndex) - 1;
 		peerBitfield[byteIndex] |= (0x80 >> bitOffset);
 	}
 	
-	private synchronized void setPeerChoking(boolean choking) {
-		this.peerChoking = choking;
+	public synchronized void setInterested(boolean interested){
+		this.amInterested = interested;
 	}
 	
-	private synchronized void setPeerInterested(boolean interested) {
-		this.peerInterested = interested;
+	public synchronized void setChoking(boolean choking) {
+		this.amChoking = choking;
 	}
-
+	
+	private synchronized boolean getInterested() {
+		return this.amInterested;
+	}
+	
+	private synchronized boolean getChoking() {
+		return this.amChoking;
+	}
+	
 }
