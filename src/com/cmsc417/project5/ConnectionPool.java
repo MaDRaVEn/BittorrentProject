@@ -35,6 +35,7 @@ public class ConnectionPool implements Runnable {
 		this.infoHash = infoHash;
 		this.peerID = peerID;
 		this.threadPool = new ScheduledThreadPoolExecutor(25);
+		this.servedPeers = new ConcurrentHashMap<String, ScheduledFuture<?>>();
 		
 	}
 	
@@ -70,11 +71,11 @@ public class ConnectionPool implements Runnable {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-					} else {
-						servedPeers.put(ip, threadPool.schedule(new PeerConnection(socket), 
-																	0, TimeUnit.SECONDS));
 					}
-				}
+				} else {
+					servedPeers.put(ip, threadPool.schedule(new PeerConnection(socket), 
+															0, TimeUnit.SECONDS));
+				}		
 			}
 		}
 	}
@@ -86,7 +87,6 @@ public class ConnectionPool implements Runnable {
 	
 	
 	public void run() {
-		// TODO Auto-generated method stub
 		
 	}
 	
@@ -103,7 +103,7 @@ public class ConnectionPool implements Runnable {
 			return false;
 		}
 		
-		return getHandshakeResponse(socket);
+		return getHandshakeResponse(socket, null);
 		
 	}
 	
@@ -125,14 +125,16 @@ public class ConnectionPool implements Runnable {
 		}
 		for(int i = 48; i < 68; i++) {
 			byte[] idBytes = peerID.getBytes();
-			message[i] = idBytes[i-28];
+			message[i] = idBytes[i-48];
 		}
 		
 		return message;
 	}
 	
-	private boolean getHandshakeResponse(Socket socket) {
+	private boolean getHandshakeResponse(Socket socket, String expectedPeer) {
 		InputStream in = null;
+		byte[] buffer = new byte[68];
+		int numRead = 0;
 		
 		try {
 			in = socket.getInputStream();
@@ -140,6 +142,54 @@ public class ConnectionPool implements Runnable {
 			e.printStackTrace();
 		}
 		
-		return false;
+		try {
+			numRead = in.read(buffer);
+		} catch (IOException e) {
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+				return false;
+			}
+			try {
+				numRead = in.read(buffer);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				return false;
+			}
+		}
+		
+		while(numRead < 68) {
+			try {
+				numRead += in.read(buffer, numRead, 68- numRead);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		if(buffer[0] != 19) {
+			return false;
+		} else {
+			String response = new String(buffer);
+			if(!response.substring(1, 20).equals("BitTorrent protocol")) {
+
+				return false;
+			}
+			
+			if(!(new String(infoHash)).equals(response.substring(28, 47))) {
+				return false;
+			}
+		
+			
+			if(expectedPeer != null && (expectedPeer.equals(response.substring(47)))) {
+				return false;
+			}
+			
+			if(response.substring(47).equals(this.peerID)) {
+				return false;
+			}
+			
+			return true;
+		}
 	}
 }

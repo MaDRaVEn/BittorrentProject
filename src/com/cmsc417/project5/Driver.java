@@ -12,22 +12,23 @@ public class Driver {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		TorrentParser parser = new TorrentParser(new File("file0.torrent"));
+		TorrentParser parser = new TorrentParser(new File(args[0]));
+		
+		byte[] infoHash = parser.getInfoHash();
+		
 		TrackerRequestHandler handler = new TrackerRequestHandler(parser.getAnnounce(),
 																  "-KC0001-910483711192",
-																  parser.getInfoMap(),
+																  infoHash,
 																  6881);
 		Map<String, ?> response = handler.request("started", 0, 0, 0);
 		Object peers = response.get("peers");
 		
 		
 		ArrayList<String[]> peerList = parsePeers(peers);
+		ConnectionPool pool = new ConnectionPool(6881, infoHash, "-KC0001-910483711192");
 		
-		for(String[] list : peerList) {
-			for(String string : list) {
-				System.out.println(string);
-			}
-		}
+		pool.addPeers(peerList);
+		pool.addPeers(peerList);
 	}
 	
 	public static ArrayList<String[]> parsePeers(Object peers) {
